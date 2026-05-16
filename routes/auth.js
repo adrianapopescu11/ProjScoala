@@ -1,10 +1,16 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const pool = require('../db/database');
+const supabase = require('../db/database');
 const { page, escHtml } = require('../lib/render');
 
 const router = express.Router();
 const wrap = fn => (req, res, next) => fn(req, res, next).catch(next);
+
+const sb = async (query) => {
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+};
 
 router.get('/login', (req, res) => {
   if (req.session.user) return res.redirect('/');
@@ -61,11 +67,9 @@ router.post('/login', wrap(async (req, res) => {
     return res.redirect('/login');
   }
 
-  const { rows } = await pool.query(
-    'SELECT * FROM users WHERE username = $1',
-    [username.trim()]
+  const user = await sb(
+    supabase.from('users').select('*').eq('username', username.trim()).maybeSingle()
   );
-  const user = rows[0];
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     req.session.loginError = 'Invalid username or password.';
@@ -77,7 +81,8 @@ router.post('/login', wrap(async (req, res) => {
 }));
 
 router.get('/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/login'));
+  req.session = null;
+  res.redirect('/login');
 });
 
 module.exports = router;

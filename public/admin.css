@@ -1,0 +1,530 @@
+/* ── Admin sidebar override ─────────────────────────────────────────────────── */
+.admin-sidebar {
+  background: #F0EDE8;
+}
+
+.admin-nav-sep {
+  height: 1px;
+  background: rgba(0,0,0,0.08);
+  margin: 12px 16px;
+}
+
+.nav-link-back {
+  opacity: 0.65;
+  font-size: 0.82rem;
+}
+
+.nav-link-back:hover {
+  opacity: 1;
+}
+
+/* ── Flash messages ──────────────────────────────────────────────────────────── */
+.flash {
+  padding: 12px 18px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flash-success {
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #A5D6A7;
+}
+
+.flash-error {
+  background: #FFEBEE;
+  color: #B71C1C;
+  border: 1px solid #FFCDD2;
+}
+
+/* ── Stat cards ──────────────────────────────────────────────────────────────── */
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.admin-stat-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 22px 20px;
+  border-left: 4px solid var(--sage, #5C7A5C);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-stat-value {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text, #2C2C2C);
+  font-family: 'DM Serif Display', serif;
+  line-height: 1;
+}
+
+.admin-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Quick action cards ──────────────────────────────────────────────────────── */
+.admin-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 36px;
+}
+
+.admin-action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border: 1.5px dashed var(--sage, #5C7A5C);
+  border-radius: 10px;
+  color: var(--sage, #5C7A5C);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.15s;
+  background: transparent;
+  cursor: pointer;
+}
+
+.admin-action-card:hover {
+  border-style: solid;
+  background: rgba(92,122,92,0.06);
+  color: var(--sage, #5C7A5C);
+}
+
+.admin-action-icon {
+  font-size: 1.4rem;
+}
+
+/* ── Data tables ─────────────────────────────────────────────────────────────── */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.admin-table thead tr {
+  border-bottom: 2px solid var(--border, #E8E4DF);
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #888);
+  font-weight: 500;
+}
+
+.admin-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border, #E8E4DF);
+  vertical-align: middle;
+}
+
+.admin-table tbody tr:nth-child(even) td {
+  background: #FAFAF8;
+}
+
+.admin-table tbody tr:hover td {
+  background: #F5F2EE;
+}
+
+.tbl-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tbl-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.tbl-link-edit {
+  color: var(--sage, #5C7A5C);
+}
+
+.tbl-link-danger {
+  color: #B85C5C;
+}
+
+.tbl-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Section header with action ──────────────────────────────────────────────── */
+.section-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-bar h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* ── Admin forms ─────────────────────────────────────────────────────────────── */
+.admin-form-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px 28px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  max-width: 760px;
+}
+
+/* markdown editor layout */
+.editor-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  min-height: 340px;
+}
+
+.editor-wrap.preview-hidden {
+  grid-template-columns: 1fr;
+}
+
+.editor-wrap .editor-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.editor-preview {
+  border: 1px solid var(--border, #E8E4DF);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  background: #FAFAF8;
+}
+
+.md-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.md-btn {
+  background: var(--surface, #F3F0EC);
+  border: 1px solid var(--border, #E8E4DF);
+  border-radius: 5px;
+  padding: 4px 9px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text, #2C2C2C);
+  font-family: monospace;
+  transition: background 0.1s;
+}
+
+.md-btn:hover {
+  background: var(--border, #E8E4DF);
+}
+
+.preview-toggle {
+  font-size: 0.78rem;
+  color: var(--sage, #5C7A5C);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+/* ── Question type morphing ───────────────────────────────────────────────────── */
+.qtype-section {
+  border-top: 1px solid var(--border, #E8E4DF);
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
+.qtype-section.hidden {
+  display: none;
+}
+
+/* ── MC answer options ───────────────────────────────────────────────────────── */
+.answer-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.answer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.answer-row input[type="radio"] {
+  flex-shrink: 0;
+  accent-color: var(--sage, #5C7A5C);
+  width: 16px;
+  height: 16px;
+}
+
+.answer-row .form-input {
+  flex: 1;
+}
+
+.answer-row-del {
+  background: none;
+  border: none;
+  color: #B85C5C;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 4px;
+  opacity: 0.6;
+  transition: opacity 0.1s;
+}
+
+.answer-row-del:hover {
+  opacity: 1;
+}
+
+.add-row-btn {
+  border: 1.5px dashed var(--sage, #5C7A5C);
+  background: none;
+  color: var(--sage, #5C7A5C);
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.83rem;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.add-row-btn:hover {
+  border-style: solid;
+  background: rgba(92,122,92,0.06);
+}
+
+/* ── Grid builder ────────────────────────────────────────────────────────────── */
+.grid-dim-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.grid-dim-row .form-group {
+  margin-bottom: 0;
+}
+
+.grid-dim-row input[type="number"] {
+  width: 80px;
+}
+
+.grid-builder-wrap {
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.grid-builder-table {
+  border-collapse: collapse;
+}
+
+.grid-builder-table th,
+.grid-builder-table td {
+  width: 56px;
+  height: 52px;
+  border: 1px solid var(--border, #E8E4DF);
+  padding: 2px;
+  text-align: center;
+}
+
+.grid-builder-table th {
+  background: #F3F0EC;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.grid-cell-inp {
+  width: 100%;
+  height: 100%;
+  border: none;
+  text-align: center;
+  font-family: monospace;
+  font-size: 0.9rem;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+}
+
+.grid-cell-inp:focus {
+  background: rgba(92,122,92,0.08);
+}
+
+td.locked-cell {
+  background: repeating-linear-gradient(
+    45deg,
+    #EDE9E4,
+    #EDE9E4 5px,
+    #E0DCD6 5px,
+    #E0DCD6 10px
+  );
+}
+
+td.locked-cell .grid-cell-inp {
+  cursor: default;
+  color: var(--text-muted, #888);
+  font-weight: 600;
+}
+
+td.selected-cell {
+  outline: 2px solid var(--sage, #5C7A5C);
+  outline-offset: -2px;
+}
+
+.grid-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.grid-selected-info {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+}
+
+/* ── Drag-reorder questions ───────────────────────────────────────────────────── */
+.q-drag-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid var(--border, #E8E4DF);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  cursor: grab;
+  transition: box-shadow 0.15s, opacity 0.15s;
+  user-select: none;
+}
+
+.q-drag-row:active {
+  cursor: grabbing;
+}
+
+.q-drag-row.dragging {
+  opacity: 0.6;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+}
+
+.q-drag-row.drag-over {
+  border-top: 2px solid var(--sage, #5C7A5C);
+}
+
+.drag-handle {
+  color: var(--text-muted, #888);
+  font-size: 1.1rem;
+  cursor: grab;
+  line-height: 1;
+}
+
+.q-row-type {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--surface, #F3F0EC);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+}
+
+.q-row-prompt {
+  flex: 1;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.q-row-pts {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+}
+
+.q-row-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ── Student detail ──────────────────────────────────────────────────────────── */
+.student-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.student-avatar-lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--sage, #5C7A5C);
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  flex-shrink: 0;
+}
+
+/* ── Color chip ──────────────────────────────────────────────────────────────── */
+.color-chip {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  vertical-align: middle;
+  border: 1px solid rgba(0,0,0,0.12);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .admin-stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .editor-wrap { grid-template-columns: 1fr; }
+  .admin-form-card { padding: 16px; }
+}

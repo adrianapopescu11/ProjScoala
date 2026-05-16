@@ -1,12 +1,10 @@
 require('dotenv').config();
-const { Pool } = require('pg');
+const { createClient } = require('@supabase/supabase-js');
 
-const isLocal = (process.env.DATABASE_URL || '').includes('localhost');
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { persistSession: false } }
+);
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: isLocal ? false : { rejectUnauthorized: false },
-  max: 5,
-});
-
-module.exports = pool;
+module.exports = supabase;
