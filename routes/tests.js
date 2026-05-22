@@ -11,11 +11,6 @@ const sb = async (query) => {
   return data;
 };
 
-function requireAuth(req, res, next) {
-  if (!req.session.user) return res.redirect('/login');
-  next();
-}
-
 function getGrade(pct) {
   if (pct >= 90) return 'A';
   if (pct >= 80) return 'B';
@@ -205,12 +200,12 @@ function renderGridResult(config, aa) {
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 // GET /tests/:id/take
-router.get('/tests/:id/take', requireAuth, wrap(async (req, res) => {
+router.get('/tests/:id/take', wrap(async (req, res) => {
   const test = await sb(
     supabase.from('tests').select('*').eq('id', req.params.id).maybeSingle()
   );
   if (!test) return res.status(404).send(
-    page('Not Found', '<div class="empty-state"><p>Test not found.</p></div>', req.session.user)
+    page('Not Found', '<div class="empty-state"><p>Test not found.</p></div>')
   );
 
   const questions = await sb(
@@ -222,26 +217,13 @@ router.get('/tests/:id/take', requireAuth, wrap(async (req, res) => {
     supabase.from('subjects').select('*').eq('id', test.subject_id).maybeSingle()
   );
 
-  // Reuse in-progress attempt (idempotent on refresh)
-  const inProgress = await sb(
-    supabase.from('test_attempts').select('*')
-      .eq('test_id', test.id)
-      .eq('user_id', req.session.user.id)
-      .is('submitted_at', null)
-      .order('started_at', { ascending: false })
-      .limit(1)
+  const maxScore = questions.reduce((s, qi) => s + (qi.points || 1), 0);
+  const attempt = await sb(
+    supabase.from('test_attempts')
+      .insert({ test_id: test.id, score: 0, max_score: maxScore })
+      .select('*')
+      .single()
   );
-  let attempt = inProgress[0] || null;
-
-  if (!attempt) {
-    const maxScore = questions.reduce((s, qi) => s + (qi.points || 1), 0);
-    attempt = await sb(
-      supabase.from('test_attempts')
-        .insert({ test_id: test.id, user_id: req.session.user.id, score: 0, max_score: maxScore })
-        .select('*')
-        .single()
-    );
-  }
 
   // Attach answer choices for MC questions
   const questionsWithData = await Promise.all(questions.map(async qi => ({
@@ -291,18 +273,17 @@ router.get('/tests/:id/take', requireAuth, wrap(async (req, res) => {
         <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">Submit Test</button>
       </div>
     </form>
-  `, req.session.user, { extraScripts: ['/test.js'] }));
+  `, { extraScripts: ['/test.js'] }));
 }));
 
 // POST /tests/:id/submit
-router.post('/tests/:id/submit', requireAuth, wrap(async (req, res) => {
+router.post('/tests/:id/submit', wrap(async (req, res) => {
   const attemptId = parseInt(req.body.attempt_id);
   if (!attemptId) return res.redirect('/');
 
   const attempt = await sb(
     supabase.from('test_attempts').select('*')
       .eq('id', attemptId)
-      .eq('user_id', req.session.user.id)
       .is('submitted_at', null)
       .maybeSingle()
   );
@@ -388,11 +369,10 @@ router.post('/tests/:id/submit', requireAuth, wrap(async (req, res) => {
 }));
 
 // GET /tests/:id/result/:aid
-router.get('/tests/:id/result/:aid', requireAuth, wrap(async (req, res) => {
+router.get('/tests/:id/result/:aid', wrap(async (req, res) => {
   const attempt = await sb(
     supabase.from('test_attempts').select('*')
       .eq('id', req.params.aid)
-      .eq('user_id', req.session.user.id)
       .maybeSingle()
   );
   if (!attempt) return res.redirect('/');
@@ -465,21 +445,20 @@ router.get('/tests/:id/result/:aid', requireAuth, wrap(async (req, res) => {
       </h2>
       ${reviewHtml}
     </div>
-  `, req.session.user, { extraScripts: ['/math-toolbar.js', '/test.js'] }));
+  `, { extraScripts: ['/math-toolbar.js', '/test.js'] }));
 }));
 
 // GET /attempts — history
-router.get('/attempts', requireAuth, wrap(async (req, res) => {
-  const myAttempts = await sb(
+router.get('/attempts', wrap(async (req, res) => {
+  const allAttempts = await sb(
     supabase.from('test_attempts').select('*')
-      .eq('user_id', req.session.user.id)
       .not('submitted_at', 'is', null)
       .order('submitted_at', { ascending: false })
   );
 
   let attempts = [];
-  if (myAttempts.length > 0) {
-    const testIds = [...new Set(myAttempts.map(a => a.test_id))];
+  if (allAttempts.length > 0) {
+    const testIds = [...new Set(allAttempts.map(a => a.test_id))];
     const tests = await sb(supabase.from('tests').select('id, title, subject_id').in('id', testIds));
 
     const subjectIds = [...new Set(tests.map(t => t.subject_id))];
@@ -488,7 +467,7 @@ router.get('/attempts', requireAuth, wrap(async (req, res) => {
     const testMap    = Object.fromEntries(tests.map(t => [t.id, t]));
     const subjectMap = Object.fromEntries(subjects.map(s => [s.id, s]));
 
-    attempts = myAttempts.map(a => ({
+    attempts = allAttempts.map(a => ({
       ...a,
       test_title:    testMap[a.test_id]?.title || '',
       subject_id:    testMap[a.test_id]?.subject_id,
@@ -498,7 +477,7 @@ router.get('/attempts', requireAuth, wrap(async (req, res) => {
 
   const rowsHtml = attempts.length === 0
     ? `<tr><td colspan="7" class="empty-td">
-         No attempts yet — take a test to see your history here.
+         No attempts yet — take a test to see history here.
        </td></tr>`
     : attempts.map(a => {
         const pct   = a.max_score > 0 ? Math.round((a.score / a.max_score) * 100) : 0;
@@ -515,10 +494,10 @@ router.get('/attempts', requireAuth, wrap(async (req, res) => {
         </tr>`;
       }).join('');
 
-  res.send(page('My Attempts', `
+  res.send(page('Attempts', `
     <div class="page-header">
-      <h1 class="page-title">My Attempts</h1>
-      <p class="page-subtitle">Your complete test history — all submitted attempts.</p>
+      <h1 class="page-title">Attempts</h1>
+      <p class="page-subtitle">All submitted test attempts.</p>
     </div>
 
     <table class="data-table">
@@ -530,7 +509,7 @@ router.get('/attempts', requireAuth, wrap(async (req, res) => {
       </thead>
       <tbody>${rowsHtml}</tbody>
     </table>
-  `, req.session.user));
+  `));
 }));
 
 module.exports = router;

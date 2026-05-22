@@ -1,14 +1,6 @@
 -- EduFlow database schema
 -- Run this in the Supabase SQL Editor (Database → SQL Editor → New query).
 
-CREATE TABLE IF NOT EXISTS users (
-  id            SERIAL PRIMARY KEY,
-  username      TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  role          TEXT NOT NULL DEFAULT 'student' CHECK(role IN ('admin', 'student')),
-  created_at    TIMESTAMPTZ DEFAULT NOW()
-);
-
 CREATE TABLE IF NOT EXISTS subjects (
   id          SERIAL PRIMARY KEY,
   title       TEXT NOT NULL,
@@ -57,7 +49,6 @@ CREATE TABLE IF NOT EXISTS answers (
 CREATE TABLE IF NOT EXISTS test_attempts (
   id           SERIAL PRIMARY KEY,
   test_id      INTEGER NOT NULL REFERENCES tests(id) ON DELETE CASCADE,
-  user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   score        REAL DEFAULT 0,
   max_score    REAL DEFAULT 0,
   started_at   TIMESTAMPTZ DEFAULT NOW(),

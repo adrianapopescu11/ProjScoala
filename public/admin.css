@@ -528,3 +528,303 @@ td.selected-cell {
   .editor-wrap { grid-template-columns: 1fr; }
   .admin-form-card { padding: 16px; }
 }
+
+/* ── Dashboard stat cards (current) ──────────────────────────────────────────── */
+.admin-stat-num {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text, #2C2C2C);
+  font-family: 'DM Serif Display', serif;
+  line-height: 1;
+}
+.admin-stat-card { text-decoration: none; transition: transform 0.1s, box-shadow 0.15s; }
+.admin-stat-card:not(.admin-stat-static):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.admin-stat-static { cursor: default; }
+.admin-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+/* ── Page header with right-aligned action ───────────────────────────────────── */
+.page-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+/* ── Generic admin-form (no card) ────────────────────────────────────────────── */
+.admin-form {
+  max-width: 880px;
+}
+.admin-form .form-group { margin-bottom: 16px; }
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+.form-input-color {
+  height: 40px;
+  padding: 4px;
+  cursor: pointer;
+}
+.form-help {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  margin: 6px 0 10px;
+}
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, #E8E4DF);
+}
+
+/* ── Buttons / links inside tables ───────────────────────────────────────────── */
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--sage, #5C7A5C);
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-link:hover { text-decoration: underline; }
+.btn-link-danger { color: #B85C5C; }
+.btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+.inline-form { display: inline; }
+.cell-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.cell-muted { color: var(--text-muted, #888); font-size: 0.85rem; }
+.color-swatch {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.12);
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* ── Type tags ───────────────────────────────────────────────────────────────── */
+.type-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--surface, #F3F0EC);
+  color: var(--text-muted, #666);
+}
+.type-lesson { background: #E8EEDB; color: #4F6630; }
+.type-note { background: #FDF1D7; color: #8A6620; }
+.type-resource { background: #DDE7EF; color: #345871; }
+.type-multiple-choice { background: #E5EAF6; color: #3F4C7D; }
+.type-short-answer { background: #F4E3E8; color: #804354; }
+.type-grid { background: #E2EEE6; color: #3D6B4E; }
+
+/* ── Sections inside edit pages ──────────────────────────────────────────────── */
+.admin-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  margin-bottom: 24px;
+}
+.admin-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.admin-section-header .section-heading { margin: 0; }
+
+/* ── Question list inside test-edit ──────────────────────────────────────────── */
+.admin-question-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: aql;
+}
+.admin-question-item {
+  counter-increment: aql;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border, #E8E4DF);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: #fff;
+}
+.admin-question-item::before {
+  content: counter(aql) ".";
+  font-weight: 600;
+  color: var(--text-muted, #888);
+  flex-shrink: 0;
+}
+.aqi-main {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+.aqi-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+.aqi-pts, .aqi-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+}
+.aqi-actions { display: flex; gap: 10px; align-items: center; }
+
+.empty-state-sm {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted, #888);
+  border: 1px dashed var(--border, #E8E4DF);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+/* ── MC answer rows (question form) ──────────────────────────────────────────── */
+#mc-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+.mc-answer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mc-answer-row input[type="checkbox"] {
+  width: 18px; height: 18px;
+  accent-color: var(--sage, #5C7A5C);
+  flex-shrink: 0;
+}
+.mc-answer-row .form-input { flex: 1; }
+
+/* ── Grid builder (current) ──────────────────────────────────────────────────── */
+#grid-builder {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+.grid-builder-table {
+  border-collapse: collapse;
+}
+.grid-builder-table th,
+.grid-builder-table td {
+  border: 1px solid var(--border, #E8E4DF);
+  padding: 0;
+  min-width: 64px;
+  height: 44px;
+  text-align: center;
+}
+.grid-builder-table th {
+  background: #F3F0EC;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 8px;
+}
+.gb-cell { position: relative; padding: 0; }
+.gb-input {
+  width: 100%; height: 100%;
+  border: none;
+  text-align: center;
+  font-family: monospace;
+  font-size: 0.9rem;
+  background: transparent;
+  outline: none;
+  padding: 4px 26px 4px 8px;
+}
+.gb-input:focus { background: rgba(92,122,92,0.08); }
+.gb-lock {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 2px;
+  opacity: 0.55;
+}
+.gb-lock:hover { opacity: 1; }
+.gb-locked {
+  background: repeating-linear-gradient(45deg, #EDE9E4, #EDE9E4 5px, #E0DCD6 5px, #E0DCD6 10px);
+}
+.gb-locked .gb-input { color: #444; font-weight: 600; }
+
+/* ── EasyMDE tweaks ──────────────────────────────────────────────────────────── */
+.EasyMDEContainer .CodeMirror { min-height: 380px; font-size: 0.92rem; }
+.editor-preview, .editor-preview-side { background: #FAFAF8; padding: 16px 18px; }
+.editor-preview img, .editor-preview-side img { max-width: 100%; height: auto; }
+
+/* EasyMDE math toolbar buttons (use `text` rather than FontAwesome icon) */
+.editor-toolbar .easymde-math-btn {
+  font-weight: 600;
+  font-family: 'DM Serif Display', Cambria, serif;
+  font-size: 0.95rem;
+  min-width: 26px;
+  text-align: center;
+}
+.editor-toolbar .easymde-math-btn::before { display: none; }
+
+/* ── Floating math palette (over plain inputs) ───────────────────────────────── */
+#admin-math-palette {
+  position: absolute;
+  z-index: 9999;
+  background: #2C2C2C;
+  color: #fff;
+  padding: 5px 6px;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  max-width: min(680px, calc(100vw - 16px));
+  align-items: center;
+}
+.amp-btn {
+  background: transparent;
+  color: #fff;
+  border: none;
+  padding: 5px 9px;
+  font-size: 0.9rem;
+  font-family: 'DM Serif Display', Cambria, serif;
+  border-radius: 5px;
+  cursor: pointer;
+  min-width: 28px;
+  line-height: 1.1;
+}
+.amp-btn:hover { background: rgba(255,255,255,0.14); }
+.amp-sep {
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+  background: rgba(255,255,255,0.18);
+  margin: 0 4px;
+}

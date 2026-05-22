@@ -11,11 +11,6 @@ const sb = async (query) => {
   return data;
 };
 
-function requireAuth(req, res, next) {
-  if (!req.session.user) return res.redirect('/login');
-  next();
-}
-
 const TYPE_LABELS = { lesson: 'Lesson', note: 'Note', resource: 'Resource' };
 const TYPE_ICONS = {
   lesson: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
@@ -24,7 +19,7 @@ const TYPE_ICONS = {
 };
 
 // ── GET / — Home ──────────────────────────────────────────────────────────────
-router.get('/', requireAuth, wrap(async (req, res) => {
+router.get('/', wrap(async (req, res) => {
   const [subjects, matRows, testRows] = await Promise.all([
     sb(supabase.from('subjects').select('*').order('order_index').order('created_at')),
     sb(supabase.from('materials').select('subject_id')),
@@ -37,10 +32,7 @@ router.get('/', requireAuth, wrap(async (req, res) => {
   testRows.forEach(r => { testMap[r.subject_id] = (testMap[r.subject_id] || 0) + 1; });
 
   const cardsHtml = subjects.length === 0
-    ? `<div class="empty-state">
-        <p>No subjects yet.</p>
-        ${req.session.user.role === 'admin' ? '<a href="/admin" class="btn btn-primary">Add subjects in Admin</a>' : ''}
-       </div>`
+    ? `<div class="empty-state"><p>No subjects yet.</p></div>`
     : subjects.map(s => `
       <a href="/subjects/${s.id}" class="subject-card" style="--subject-color: ${escHtml(s.color)}">
         <div class="subject-color-bar"></div>
@@ -61,18 +53,18 @@ router.get('/', requireAuth, wrap(async (req, res) => {
       <p class="page-subtitle">Browse subjects, read materials, and take tests to track your progress.</p>
     </div>
     <div class="subjects-grid">${cardsHtml}</div>
-  `, req.session.user));
+  `));
 }));
 
-router.get('/subjects', requireAuth, (req, res) => res.redirect('/'));
+router.get('/subjects', (req, res) => res.redirect('/'));
 
 // ── GET /subjects/:id ─────────────────────────────────────────────────────────
-router.get('/subjects/:id', requireAuth, wrap(async (req, res) => {
+router.get('/subjects/:id', wrap(async (req, res) => {
   const subject = await sb(
     supabase.from('subjects').select('*').eq('id', req.params.id).maybeSingle()
   );
   if (!subject) return res.status(404).send(
-    page('Not Found', '<div class="empty-state"><p>Subject not found.</p></div>', req.session.user)
+    page('Not Found', '<div class="empty-state"><p>Subject not found.</p></div>')
   );
 
   const [materials, tests] = await Promise.all([
@@ -139,16 +131,16 @@ router.get('/subjects/:id', requireAuth, wrap(async (req, res) => {
            ${testsHtml}`
       }
     </div>
-  `, req.session.user));
+  `));
 }));
 
 // ── GET /materials/:id ────────────────────────────────────────────────────────
-router.get('/materials/:id', requireAuth, wrap(async (req, res) => {
+router.get('/materials/:id', wrap(async (req, res) => {
   const material = await sb(
     supabase.from('materials').select('*').eq('id', req.params.id).maybeSingle()
   );
   if (!material) return res.status(404).send(
-    page('Not Found', '<div class="empty-state"><p>Material not found.</p></div>', req.session.user)
+    page('Not Found', '<div class="empty-state"><p>Material not found.</p></div>')
   );
 
   const [subject, siblings] = await Promise.all([
@@ -217,22 +209,22 @@ router.get('/materials/:id', requireAuth, wrap(async (req, res) => {
         });
       }
     </script>
-  `, req.session.user));
+  `));
 }));
 
 // ── GET /tests/:id ────────────────────────────────────────────────────────────
-router.get('/tests/:id', requireAuth, wrap(async (req, res) => {
+router.get('/tests/:id', wrap(async (req, res) => {
   const test = await sb(
     supabase.from('tests').select('*').eq('id', req.params.id).maybeSingle()
   );
   if (!test) return res.status(404).send(
-    page('Not Found', '<div class="empty-state"><p>Test not found.</p></div>', req.session.user)
+    page('Not Found', '<div class="empty-state"><p>Test not found.</p></div>')
   );
 
   const [subject, questions, pastAttempts] = await Promise.all([
     sb(supabase.from('subjects').select('*').eq('id', test.subject_id).maybeSingle()),
     sb(supabase.from('questions').select('*').eq('test_id', test.id).order('order_index')),
-    sb(supabase.from('test_attempts').select('*').eq('test_id', test.id).eq('user_id', req.session.user.id).order('submitted_at', { ascending: false })),
+    sb(supabase.from('test_attempts').select('*').eq('test_id', test.id).not('submitted_at', 'is', null).order('submitted_at', { ascending: false })),
   ]);
 
   const totalPoints = questions.reduce((s, q) => s + (q.points || 1), 0);
@@ -242,7 +234,7 @@ router.get('/tests/:id', requireAuth, wrap(async (req, res) => {
 
   const attemptsHtml = pastAttempts.length === 0 ? '' : `
     <div class="attempts-history">
-      <h3 class="section-heading-sm">Your past attempts</h3>
+      <h3 class="section-heading-sm">Past attempts</h3>
       <table class="data-table">
         <thead><tr><th>Date</th><th>Score</th><th>Result</th></tr></thead>
         <tbody>
@@ -285,175 +277,12 @@ router.get('/tests/:id', requireAuth, wrap(async (req, res) => {
         ${bestScore !== null ? `<div class="stat-box"><span class="stat-value">${bestScore}</span><span class="stat-label">Best Score</span></div>` : ''}
       </div>
       ${questions.length > 0
-        ? `<form method="POST" action="/tests/${test.id}/start"><button type="submit" class="btn btn-primary btn-lg">Begin Test</button></form>`
+        ? `<a href="/tests/${test.id}/take" class="btn btn-primary btn-lg">Begin Test</a>`
         : `<div class="alert alert-info">This test has no questions yet.</div>`
       }
     </div>
     ${attemptsHtml}
-  `, req.session.user));
-}));
-
-// ── POST /tests/:id/start ─────────────────────────────────────────────────────
-router.post('/tests/:id/start', requireAuth, wrap(async (req, res) => {
-  const test = await sb(
-    supabase.from('tests').select('*').eq('id', req.params.id).maybeSingle()
-  );
-  if (!test) return res.redirect('/');
-
-  const questions = await sb(
-    supabase.from('questions').select('*').eq('test_id', test.id)
-  );
-  if (questions.length === 0) return res.redirect(`/tests/${test.id}`);
-
-  const maxScore = questions.reduce((s, q) => s + (q.points || 1), 0);
-  await sb(
-    supabase.from('test_attempts').insert({
-      test_id: test.id,
-      user_id: req.session.user.id,
-      score: 0,
-      max_score: maxScore,
-    })
-  );
-  res.redirect(`/tests/${test.id}/take`);
-}));
-
-// ── Legacy attempt routes ─────────────────────────────────────────────────────
-
-router.get('/attempts/:id', requireAuth, wrap(async (req, res) => {
-  const attempt = await sb(
-    supabase.from('test_attempts').select('*').eq('id', req.params.id).eq('user_id', req.session.user.id).maybeSingle()
-  );
-  if (!attempt) return res.redirect('/');
-  if (attempt.submitted_at) return res.redirect(`/attempts/${attempt.id}/result`);
-
-  const test = await sb(supabase.from('tests').select('*').eq('id', attempt.test_id).maybeSingle());
-  const questions = await sb(supabase.from('questions').select('*').eq('test_id', test.id).order('order_index'));
-
-  const questionsWithAnswers = await Promise.all(questions.map(async q => ({
-    ...q,
-    answers: q.type === 'multiple_choice'
-      ? await sb(supabase.from('answers').select('*').eq('question_id', q.id))
-      : [],
-  })));
-
-  const renderQuestion = (q, idx) => {
-    const inputHtml = q.type === 'multiple_choice'
-      ? `<div class="answer-options">
-          ${q.answers.map(a => `
-            <label class="answer-option">
-              <input type="radio" name="q_${q.id}" value="${a.id}" />
-              <span class="answer-text">${escHtml(a.answer_text)}</span>
-            </label>
-          `).join('')}
-         </div>`
-      : `<textarea name="q_${q.id}" class="short-answer-input" rows="3" placeholder="Write your answer here…"></textarea>`;
-
-    return `
-      <div class="question-block" id="q-block-${q.id}">
-        <div class="question-header">
-          <span class="question-number">Q${idx + 1}</span>
-          <span class="question-points">${q.points || 1} pt${(q.points || 1) !== 1 ? 's' : ''}</span>
-        </div>
-        <p class="question-text">${escHtml(q.question_text)}</p>
-        ${inputHtml}
-      </div>
-    `;
-  };
-
-  res.send(page(test.title, `
-    <form method="POST" action="/attempts/${attempt.id}/submit" id="test-form">
-      <div class="questions-list">
-        ${questionsWithAnswers.map((q, i) => renderQuestion(q, i)).join('')}
-      </div>
-      <div class="test-submit-bar">
-        <button type="submit" class="btn btn-primary btn-lg">Submit Test</button>
-      </div>
-    </form>
-  `, req.session.user));
-}));
-
-router.post('/attempts/:id/submit', requireAuth, wrap(async (req, res) => {
-  const attempt = await sb(
-    supabase.from('test_attempts').select('*').eq('id', req.params.id).eq('user_id', req.session.user.id).maybeSingle()
-  );
-  if (!attempt || attempt.submitted_at) return res.redirect('/');
-
-  const questions = await sb(supabase.from('questions').select('*').eq('test_id', attempt.test_id).order('order_index'));
-
-  let totalScore = 0;
-  for (const q of questions) {
-    const given = req.body[`q_${q.id}`] || '';
-    let isCorrect = 0, pointsEarned = 0;
-    if (q.type === 'multiple_choice') {
-      const answerId = parseInt(given);
-      if (answerId) {
-        const ans = await sb(supabase.from('answers').select('*').eq('id', answerId).eq('question_id', q.id).maybeSingle());
-        if (ans && ans.is_correct) { isCorrect = 1; pointsEarned = q.points || 1; }
-      }
-    }
-    totalScore += pointsEarned;
-    await sb(supabase.from('attempt_answers').insert({ attempt_id: attempt.id, question_id: q.id, answer_given: given, is_correct: isCorrect, points_earned: pointsEarned }));
-  }
-  await sb(supabase.from('test_attempts').update({ score: totalScore, submitted_at: new Date().toISOString() }).eq('id', attempt.id));
-  res.redirect(`/attempts/${attempt.id}/result`);
-}));
-
-router.get('/attempts/:id/result', requireAuth, wrap(async (req, res) => {
-  const attempt = await sb(supabase.from('test_attempts').select('*').eq('id', req.params.id).eq('user_id', req.session.user.id).maybeSingle());
-  if (!attempt) return res.redirect('/');
-  const test    = await sb(supabase.from('tests').select('*').eq('id', attempt.test_id).maybeSingle());
-  const subject = await sb(supabase.from('subjects').select('*').eq('id', test.subject_id).maybeSingle());
-  const [questions, attemptAnswers] = await Promise.all([
-    sb(supabase.from('questions').select('*').eq('test_id', test.id).order('order_index')),
-    sb(supabase.from('attempt_answers').select('*').eq('attempt_id', attempt.id)),
-  ]);
-  const answerMap = Object.fromEntries(attemptAnswers.map(a => [a.question_id, a]));
-  const pct = attempt.max_score > 0 ? Math.round((attempt.score / attempt.max_score) * 100) : 0;
-  const passed = pct >= 50;
-
-  const reviewHtml = (await Promise.all(questions.map(async (q, i) => {
-    const aa = answerMap[q.id];
-    let givenText = aa ? aa.answer_given : '—';
-    if (q.type === 'multiple_choice' && aa?.answer_given) {
-      const ans = await sb(supabase.from('answers').select('*').eq('id', parseInt(aa.answer_given)).maybeSingle());
-      if (ans) givenText = ans.answer_text;
-    }
-    const correct = aa && aa.is_correct;
-    const correctAnswers = await sb(supabase.from('answers').select('*').eq('question_id', q.id).eq('is_correct', 1));
-    const ca = correctAnswers[0] || null;
-    return `<div class="result-question ${correct ? 'result-correct' : 'result-wrong'}">
-      <div class="result-q-header">
-        <span class="question-number">Q${i + 1}</span>
-        <span class="result-icon">${correct ? '✓' : '✗'}</span>
-        <span class="result-pts">${aa ? aa.points_earned : 0} / ${q.points || 1}</span>
-      </div>
-      <p class="question-text">${escHtml(q.question_text)}</p>
-      <div class="result-answer-row">
-        <div class="result-answer-box ${correct ? 'correct' : 'wrong'}">
-          <small>Your answer</small><span>${escHtml(givenText || '(no answer)')}</span>
-        </div>
-        ${!correct && ca ? `<div class="result-answer-box correct"><small>Correct answer</small><span>${escHtml(ca.answer_text)}</span></div>` : ''}
-      </div>
-    </div>`;
-  }))).join('');
-
-  res.send(page('Test Result', `
-    <div class="result-hero ${passed ? 'result-pass' : 'result-fail'}">
-      <div class="result-score-circle">
-        <span class="result-pct">${pct}%</span>
-        <span class="result-fraction">${attempt.score} / ${attempt.max_score}</span>
-      </div>
-      <div class="result-verdict">
-        <h1>${passed ? 'Well done!' : 'Keep practicing'}</h1>
-        <p>${escHtml(test.title)}</p>
-      </div>
-    </div>
-    <div class="result-review"><h2 class="section-heading-sm">Question Review</h2>${reviewHtml}</div>
-    <div class="result-actions">
-      <a href="/tests/${test.id}" class="btn btn-secondary">Retake Test</a>
-      <a href="/subjects/${subject.id}" class="btn btn-primary">Back to Subject</a>
-    </div>
-  `, req.session.user));
+  `));
 }));
 
 module.exports = router;

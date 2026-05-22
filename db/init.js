@@ -1,6 +1,5 @@
 require('dotenv').config();
 const supabase = require('./database');
-const bcrypt = require('bcrypt');
 
 const sb = async (query) => {
   const { data, error } = await query;
@@ -9,15 +8,6 @@ const sb = async (query) => {
 };
 
 async function seed() {
-  // Admin user
-  const hash = bcrypt.hashSync('admin123', 10);
-  await sb(
-    supabase.from('users').upsert(
-      { username: 'admin', password_hash: hash, role: 'admin' },
-      { onConflict: 'username', ignoreDuplicates: true }
-    )
-  );
-
   const existing = await sb(supabase.from('subjects').select('id').limit(1));
   if (existing.length > 0) {
     console.log('Database already seeded.');

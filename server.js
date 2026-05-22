@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const cookieSession = require('cookie-session');
 const path = require('path');
 
 const app = express();
@@ -9,15 +8,21 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(cookieSession({
-  name: 'session',
-  secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  secure: process.env.NODE_ENV === 'production',
-  httpOnly: true,
-}));
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
 
-app.use(require('./routes/auth'));
+app.use('/admin', (req, res, next) => {
+  const header = req.headers.authorization || '';
+  const [scheme, encoded] = header.split(' ');
+  if (scheme === 'Basic' && encoded) {
+    const [user, pass] = Buffer.from(encoded, 'base64').toString('utf8').split(':');
+    if (user === ADMIN_USER && pass === ADMIN_PASS) return next();
+  }
+  res.set('WWW-Authenticate', 'Basic realm="EduFlow Admin"');
+  res.status(401).send('Authentication required.');
+});
+
+app.use(require('./routes/admin'));
 app.use(require('./routes/curriculum'));
 app.use(require('./routes/tests'));
 
@@ -29,7 +34,7 @@ app.use((err, req, res, next) => {
       <p>Something went wrong. Please try again.</p>
       <a href="/" class="btn btn-primary">Go home</a>
     </div>
-  `, req.session?.user));
+  `));
 });
 
 app.use((req, res) => {
@@ -40,7 +45,7 @@ app.use((req, res) => {
       <p class="not-found-subtitle">Page not found.</p>
       <a href="/" class="btn btn-primary">Go home</a>
     </div>
-  `, req.session?.user));
+  `));
 });
 
 if (require.main === module) {
