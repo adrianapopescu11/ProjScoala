@@ -269,6 +269,7 @@ router.get('/tests/:id', wrap(async (req, res) => {
         </div>
         <h1 class="material-article-title">${escHtml(test.title)}</h1>
         ${test.description ? `<p class="test-description">${escHtml(test.description)}</p>` : ''}
+        ${test.image_url ? `<div class="test-image"><img src="${escHtml(test.image_url)}" alt="Diagramă" /></div>` : ''}
       </div>
       <div class="test-stats">
         <div class="stat-box"><span class="stat-value">${questions.length}</span><span class="stat-label">Questions</span></div>

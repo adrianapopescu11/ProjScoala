@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS tests (
   subject_id         INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
   title              TEXT NOT NULL,
   description        TEXT,
+  image_url          TEXT,
   time_limit_minutes INTEGER,
   created_at         TIMESTAMPTZ DEFAULT NOW()
 );
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS questions (
   id            SERIAL PRIMARY KEY,
   test_id       INTEGER NOT NULL REFERENCES tests(id) ON DELETE CASCADE,
   question_text TEXT NOT NULL,
+  image_url     TEXT,
   type          TEXT NOT NULL DEFAULT 'multiple_choice'
                 CHECK(type IN ('multiple_choice', 'short_answer', 'grid')),
   order_index   INTEGER DEFAULT 0,

@@ -55,6 +55,7 @@ function renderQuestion(q, idx) {
         <span class="question-pts-tag">${q.points || 1} pt${(q.points || 1) !== 1 ? 's' : ''}</span>
       </div>
       <div class="question-prompt">${escHtml(prompt)}</div>
+      ${q.image_url ? `<div class="question-image"><img src="${escHtml(q.image_url)}" alt="Diagramă" /></div>` : ''}
       ${inputHtml}
     </div>`;
 }
@@ -154,7 +155,10 @@ async function renderResultQuestion(q, idx, aa) {
         <span class="rq-prompt-preview">${escHtml(prompt.slice(0, 90))}${prompt.length > 90 ? '…' : ''}</span>
         <span class="rq-pts ${correct ? 'rq-pts-ok' : 'rq-pts-fail'}">${ptsStr} / ${maxPts}</span>
       </div>
-      <div class="result-q-body">${bodyHtml}</div>
+      <div class="result-q-body">
+        ${q.image_url ? `<div class="question-image"><img src="${escHtml(q.image_url)}" alt="Diagramă" /></div>` : ''}
+        ${bodyHtml}
+      </div>
     </div>`;
 }
 
@@ -259,6 +263,7 @@ router.get('/tests/:id/take', wrap(async (req, res) => {
     <div class="test-take-header">
       <h1 class="test-take-title">${escHtml(test.title)}</h1>
       <p class="test-take-meta">${questions.length} questions · ${attempt.max_score} points total</p>
+      ${test.image_url ? `<div class="test-image"><img src="${escHtml(test.image_url)}" alt="Diagramă" /></div>` : ''}
     </div>
 
     <form id="test-form" method="POST" action="/tests/${test.id}/submit">

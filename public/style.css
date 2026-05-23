@@ -996,6 +996,30 @@ select.form-input { cursor: pointer; }
   font-size: 0.95rem;
 }
 
+.test-image {
+  margin: 16px 0 4px;
+  text-align: center;
+}
+.test-image img {
+  max-width: 100%;
+  max-height: 360px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.question-image {
+  margin: 12px 0;
+  text-align: center;
+}
+.question-image img {
+  max-width: 100%;
+  max-height: 260px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+
 .test-stats {
   display: flex;
   gap: 16px;
