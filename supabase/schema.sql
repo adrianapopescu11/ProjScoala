@@ -65,3 +65,10 @@ CREATE TABLE IF NOT EXISTS attempt_answers (
   is_correct    SMALLINT DEFAULT 0,
   points_earned REAL DEFAULT 0
 );
+
+-- Admin-editable text overrides. Empty / missing rows fall back to defaults
+-- declared in lib/settings.js.
+CREATE TABLE IF NOT EXISTS site_settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT
+);

@@ -1,6 +1,7 @@
 const express = require('express');
 const supabase = require('../db/database');
 const { page, escHtml } = require('../lib/render');
+const settings = require('../lib/settings');
 
 const router = express.Router();
 const wrap = fn => (req, res, next) => fn(req, res, next).catch(next);
@@ -31,8 +32,11 @@ router.get('/', wrap(async (req, res) => {
   const testMap = {};
   testRows.forEach(r => { testMap[r.subject_id] = (testMap[r.subject_id] || 0) + 1; });
 
+  const matLabel  = escHtml(settings.get('home_meta_materials'));
+  const testLabel = escHtml(settings.get('home_meta_tests'));
+
   const cardsHtml = subjects.length === 0
-    ? `<div class="empty-state"><p>No subjects yet.</p></div>`
+    ? `<div class="empty-state"><p>${escHtml(settings.get('home_empty'))}</p></div>`
     : subjects.map(s => `
       <a href="/subjects/${s.id}" class="subject-card" style="--subject-color: ${escHtml(s.color)}">
         <div class="subject-color-bar"></div>
@@ -40,8 +44,8 @@ router.get('/', wrap(async (req, res) => {
           <h2 class="subject-card-title">${escHtml(s.title)}</h2>
           <p class="subject-card-desc">${escHtml(s.description || '')}</p>
           <div class="subject-card-meta">
-            <span class="meta-chip">${countMap[s.id] || 0} materials</span>
-            <span class="meta-chip">${testMap[s.id] || 0} tests</span>
+            <span class="meta-chip">${countMap[s.id] || 0} ${matLabel}</span>
+            <span class="meta-chip">${testMap[s.id] || 0} ${testLabel}</span>
           </div>
         </div>
       </a>
@@ -49,8 +53,8 @@ router.get('/', wrap(async (req, res) => {
 
   res.send(page('Home', `
     <div class="page-header">
-      <h1 class="page-title">Your Curriculum</h1>
-      <p class="page-subtitle">Browse subjects, read materials, and take tests to track your progress.</p>
+      <h1 class="page-title">${escHtml(settings.get('home_title'))}</h1>
+      <p class="page-subtitle">${escHtml(settings.get('home_subtitle'))}</p>
     </div>
     <div class="subjects-grid">${cardsHtml}</div>
   `));
@@ -278,8 +282,8 @@ router.get('/tests/:id', wrap(async (req, res) => {
         ${bestScore !== null ? `<div class="stat-box"><span class="stat-value">${bestScore}</span><span class="stat-label">Best Score</span></div>` : ''}
       </div>
       ${questions.length > 0
-        ? `<a href="/tests/${test.id}/take" class="btn btn-primary btn-lg">Begin Test</a>`
-        : `<div class="alert alert-info">This test has no questions yet.</div>`
+        ? `<a href="/tests/${test.id}/take" class="btn btn-primary btn-lg">${escHtml(settings.get('test_begin_btn'))}</a>`
+        : `<div class="alert alert-info">${escHtml(settings.get('test_no_questions'))}</div>`
       }
     </div>
     ${attemptsHtml}

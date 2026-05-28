@@ -49,6 +49,13 @@ If you re-introduce auth, you'll need to: add `cookie-session` back, restore `us
 - `escHtml(str)` — **always use this for any user-supplied or DB-supplied string** interpolated into template literals. There is no auto-escaping.
 - `opts.extraScripts` — array of script URLs appended at the end of `<body>` (e.g. `'/test.js'`, `'/math-toolbar.js'`).
 
+### Editable text / site settings
+Every visible string on the site (site name, logo, nav labels, page headings, button labels, pass/fail verdicts, 404/500 copy, etc.) is sourced from `lib/settings.js`. Defaults live in the `DEFAULTS` map there; admin overrides are stored as `(key, value)` rows in the `site_settings` Postgres table and managed at `/admin/settings`.
+
+To make a new string editable: add a row to `DEFAULTS` in `lib/settings.js` (with `group`, `label`, `default`) and replace the hardcoded text in the route/template with `settings.get('your_key')`. It will automatically appear on the admin settings page grouped under the chosen heading. Blank input on the admin form = use default (the row is deleted).
+
+The settings cache is in-process with a 30s TTL, primed by middleware in `server.js`. The POST handler busts the cache so admins see their own changes immediately; other warm instances pick them up within 30s.
+
 ### Database access pattern
 Every route imports `supabase` from `db/database.js` and uses a local helper:
 ```js

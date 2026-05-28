@@ -1,12 +1,20 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const settings = require('./lib/settings');
 
 const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Load admin-editable text overrides (cached, 30s TTL). Failures fall back
+// to defaults silently — settings is a convenience layer, never a hard dep.
+app.use(async (req, res, next) => {
+  try { await settings.ensureLoaded(); } catch (_) {}
+  next();
+});
 
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
@@ -28,22 +36,22 @@ app.use(require('./routes/tests'));
 
 app.use((err, req, res, next) => {
   console.error(err);
-  const { page } = require('./lib/render');
+  const { page, escHtml } = require('./lib/render');
   res.status(500).send(page('Error', `
     <div class="empty-state">
-      <p>Something went wrong. Please try again.</p>
-      <a href="/" class="btn btn-primary">Go home</a>
+      <p>${escHtml(settings.get('err_500_msg'))}</p>
+      <a href="/" class="btn btn-primary">${escHtml(settings.get('err_go_home_btn'))}</a>
     </div>
   `));
 });
 
 app.use((req, res) => {
-  const { page } = require('./lib/render');
+  const { page, escHtml } = require('./lib/render');
   res.status(404).send(page('Not Found', `
     <div class="not-found">
-      <h1 class="not-found-title">404</h1>
-      <p class="not-found-subtitle">Page not found.</p>
-      <a href="/" class="btn btn-primary">Go home</a>
+      <h1 class="not-found-title">${escHtml(settings.get('err_404_title'))}</h1>
+      <p class="not-found-subtitle">${escHtml(settings.get('err_404_msg'))}</p>
+      <a href="/" class="btn btn-primary">${escHtml(settings.get('err_go_home_btn'))}</a>
     </div>
   `));
 });

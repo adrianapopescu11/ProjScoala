@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const supabase = require('../db/database');
 const { adminPage, escHtml } = require('../lib/render');
+const settings = require('../lib/settings');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
@@ -77,6 +78,78 @@ router.get('/admin', wrap(async (req, res) => {
       <a href="/admin/tests/new" class="btn btn-primary">+ New Test</a>
     </div>
   `, { activePath: '/admin', flash: flashFor(req) }));
+}));
+
+// ─── Site Settings ────────────────────────────────────────────────────────────
+// One form lets admins override every editable string on the site. Defaults
+// live in lib/settings.js — blank input = "use default". Empty submissions
+// delete the row so the default takes over again.
+router.get('/admin/settings', wrap(async (req, res) => {
+  await settings.ensureLoaded();
+  const defs = settings.getDefaults();
+  const overrides = settings.getOverrides();
+
+  const groups = {};
+  for (const [key, def] of Object.entries(defs)) {
+    (groups[def.group] = groups[def.group] || []).push({ key, ...def });
+  }
+
+  const groupsHtml = Object.entries(groups).map(([groupName, items]) => `
+    <section class="admin-section">
+      <h2 class="section-heading">${escHtml(groupName)}</h2>
+      ${items.map(item => {
+        const current  = overrides[item.key] ?? '';
+        const isLong   = item.default.length > 60;
+        const inputTag = isLong
+          ? `<textarea name="${escHtml(item.key)}" class="form-input" rows="2" placeholder="${escHtml(item.default)}">${escHtml(current)}</textarea>`
+          : `<input type="text" name="${escHtml(item.key)}" class="form-input" placeholder="${escHtml(item.default)}" value="${escHtml(current)}" />`;
+        return `
+          <div class="form-group">
+            <label class="form-label">${escHtml(item.label)}</label>
+            ${inputTag}
+            <p class="form-help">Default: <code>${escHtml(item.default)}</code> · Leave blank to use the default.</p>
+          </div>
+        `;
+      }).join('')}
+    </section>
+  `).join('');
+
+  res.send(adminPage('Settings', `
+    <div class="page-header">
+      <h1 class="page-title">Settings</h1>
+      <p class="page-subtitle">Edit any visible text on the site. Changes apply within ~30 seconds (immediately for the admin).</p>
+    </div>
+    <form method="POST" action="/admin/settings" class="admin-form">
+      ${groupsHtml}
+      <div class="form-actions">
+        <a href="/admin" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save all</button>
+      </div>
+    </form>
+  `, { activePath: '/admin/settings', flash: flashFor(req) }));
+}));
+
+router.post('/admin/settings', wrap(async (req, res) => {
+  const defs = settings.getDefaults();
+  const toUpsert = [];
+  const toDelete = [];
+
+  for (const key of Object.keys(defs)) {
+    const val = (req.body[key] ?? '').trim();
+    if (val === '') toDelete.push(key);
+    else toUpsert.push({ key, value: val });
+  }
+
+  if (toUpsert.length > 0) {
+    await sb(supabase.from('site_settings').upsert(toUpsert, { onConflict: 'key' }));
+  }
+  if (toDelete.length > 0) {
+    await sb(supabase.from('site_settings').delete().in('key', toDelete));
+  }
+
+  settings.bust();
+  await settings.ensureLoaded();
+  res.redirect('/admin/settings?flash=updated');
 }));
 
 // ─── Subjects ─────────────────────────────────────────────────────────────────

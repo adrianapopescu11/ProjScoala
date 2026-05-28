@@ -1,6 +1,7 @@
 const express = require('express');
 const supabase = require('../db/database');
 const { page, escHtml } = require('../lib/render');
+const settings = require('../lib/settings');
 
 const router = express.Router();
 const wrap = fn => (req, res, next) => fn(req, res, next).catch(next);
@@ -275,7 +276,7 @@ router.get('/tests/:id/take', wrap(async (req, res) => {
 
       <div class="test-sticky-bar">
         <span class="sticky-bar-meta">${questions.length} questions · ${attempt.max_score} pts</span>
-        <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">Submit Test</button>
+        <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">${escHtml(settings.get('test_submit_btn'))}</button>
       </div>
     </form>
   `, { extraScripts: ['/test.js'] }));
@@ -426,7 +427,7 @@ router.get('/tests/:id/result/:aid', wrap(async (req, res) => {
         </div>
       </div>
       <div class="results-hero-right">
-        <h1 class="results-verdict">${pct >= 60 ? 'Well done!' : 'Keep practicing'}</h1>
+        <h1 class="results-verdict">${escHtml(pct >= 60 ? settings.get('test_pass_msg') : settings.get('test_fail_msg'))}</h1>
         <p class="results-test-name">${escHtml(test.title)}</p>
         <div class="results-stat-row">
           <div class="stat-box"><span class="stat-value">${questions.length}</span><span class="stat-label">Questions</span></div>
@@ -434,8 +435,8 @@ router.get('/tests/:id/result/:aid', wrap(async (req, res) => {
           <div class="stat-box"><span class="stat-value">${attempt.score}</span><span class="stat-label">Points</span></div>
         </div>
         <div class="results-actions-inline">
-          <a href="/tests/${test.id}" class="btn btn-secondary">Retake</a>
-          <a href="/subjects/${subject.id}" class="btn btn-primary">Back to Subject</a>
+          <a href="/tests/${test.id}" class="btn btn-secondary">${escHtml(settings.get('test_retake_btn'))}</a>
+          <a href="/subjects/${subject.id}" class="btn btn-primary">${escHtml(settings.get('test_back_btn'))}</a>
         </div>
       </div>
     </div>
@@ -482,7 +483,7 @@ router.get('/attempts', wrap(async (req, res) => {
 
   const rowsHtml = attempts.length === 0
     ? `<tr><td colspan="7" class="empty-td">
-         No attempts yet — take a test to see history here.
+         ${escHtml(settings.get('attempts_empty'))}
        </td></tr>`
     : attempts.map(a => {
         const pct   = a.max_score > 0 ? Math.round((a.score / a.max_score) * 100) : 0;
@@ -499,10 +500,10 @@ router.get('/attempts', wrap(async (req, res) => {
         </tr>`;
       }).join('');
 
-  res.send(page('Attempts', `
+  res.send(page(settings.get('attempts_title'), `
     <div class="page-header">
-      <h1 class="page-title">Attempts</h1>
-      <p class="page-subtitle">All submitted test attempts.</p>
+      <h1 class="page-title">${escHtml(settings.get('attempts_title'))}</h1>
+      <p class="page-subtitle">${escHtml(settings.get('attempts_subtitle'))}</p>
     </div>
 
     <table class="data-table">
