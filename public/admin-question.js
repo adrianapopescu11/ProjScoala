@@ -39,9 +39,9 @@
     const row = document.createElement('div');
     row.className = 'mc-answer-row';
     row.innerHTML = `
-      <input type="checkbox" name="answer_correct_${idx}" value="1" />
-      <input type="text" name="answer_text_${idx}" class="form-input" placeholder="Answer option" />
-      <button type="button" class="btn-link btn-link-danger remove-mc-answer">Remove</button>
+      <input type="checkbox" name="answer_correct_${idx}" value="1" title="Bifează dacă este varianta corectă" />
+      <input type="text" name="answer_text_${idx}" class="form-input" placeholder="Variantă de răspuns" />
+      <button type="button" class="btn-link btn-link-danger remove-mc-answer">Șterge</button>
     `;
     mcContainer.appendChild(row);
     renumberMc();
@@ -95,7 +95,7 @@
         html += `
           <td class="gb-cell ${locked ? 'gb-locked' : ''}">
             <input type="text" class="gb-input" data-r="${r}" data-c="${c}" value="${escAttr(v)}" />
-            <button type="button" class="gb-lock" data-r="${r}" data-c="${c}" title="Toggle locked (shown to student)">${locked ? '🔒' : '🔓'}</button>
+            <button type="button" class="gb-lock" data-r="${r}" data-c="${c}" title="Apasă ca să arăți/ascunzi această căsuță deja completată elevului">${locked ? '🔒' : '🔓'}</button>
           </td>`;
       }
       html += '</tr>';

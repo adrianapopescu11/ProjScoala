@@ -12,13 +12,8 @@ const sb = async (query) => {
   return data;
 };
 
-function getGrade(pct) {
-  if (pct >= 90) return 'A';
-  if (pct >= 80) return 'B';
-  if (pct >= 70) return 'C';
-  if (pct >= 60) return 'D';
-  return 'F';
-}
+// Format a points value for display: trim trailing zeros (3.75 → "3.75", 15 → "15").
+const fmtPts = n => parseFloat(parseFloat(n || 0).toFixed(2)).toString();
 
 // ─── Question renderers (take page) ───────────────────────────────────────────
 
@@ -53,7 +48,7 @@ function renderQuestion(q, idx) {
     <div class="question-card" id="q-${q.id}">
       <div class="question-card-header">
         <span class="question-number">Q${idx + 1}</span>
-        <span class="question-pts-tag">${q.points || 1} pt${(q.points || 1) !== 1 ? 's' : ''}</span>
+        <span class="question-pts-tag">${fmtPts(q.points || 1)} pt${(q.points || 1) !== 1 ? 's' : ''}</span>
       </div>
       <div class="question-prompt">${escHtml(prompt)}</div>
       ${q.image_url ? `<div class="question-image"><img src="${escHtml(q.image_url)}" alt="Diagramă" /></div>` : ''}
@@ -147,14 +142,14 @@ async function renderResultQuestion(q, idx, aa) {
       </div>`;
   }
 
-  const ptsStr = ptsEarned % 1 === 0 ? String(ptsEarned) : ptsEarned.toFixed(1);
+  const ptsStr = fmtPts(ptsEarned);
   return `
     <div class="result-q-card ${correct ? 'rq-correct' : 'rq-wrong'}">
       <div class="result-q-header">
         <span class="question-number">Q${idx + 1}</span>
         <span class="rq-verdict ${correct ? 'rq-ok' : 'rq-fail'}">${correct ? '✓' : '✗'}</span>
         <span class="rq-prompt-preview">${escHtml(prompt.slice(0, 90))}${prompt.length > 90 ? '…' : ''}</span>
-        <span class="rq-pts ${correct ? 'rq-pts-ok' : 'rq-pts-fail'}">${ptsStr} / ${maxPts}</span>
+        <span class="rq-pts ${correct ? 'rq-pts-ok' : 'rq-pts-fail'}">${ptsStr} / ${fmtPts(maxPts)}</span>
       </div>
       <div class="result-q-body">
         ${q.image_url ? `<div class="question-image"><img src="${escHtml(q.image_url)}" alt="Diagramă" /></div>` : ''}
@@ -394,8 +389,7 @@ router.get('/tests/:id/result/:aid', wrap(async (req, res) => {
   const pct   = attempt.max_score > 0
     ? Math.round((attempt.score / attempt.max_score) * 100)
     : 0;
-  const grade = getGrade(pct);
-  const gradeColor = { A: '#5C7A5C', B: '#27ae60', C: '#d4a017', D: '#e67e22', F: '#e74c3c' }[grade];
+  const scoreColor = pct >= 80 ? '#5C7A5C' : pct >= 50 ? '#d4a017' : '#e74c3c';
 
   const reviewHtml = (
     await Promise.all(questions.map((q, i) => renderResultQuestion(q, i, answerMap[q.id])))
@@ -418,12 +412,11 @@ router.get('/tests/:id/result/:aid', wrap(async (req, res) => {
           <circle cx="60" cy="60" r="50" class="score-track" />
           <circle cx="60" cy="60" r="50" class="score-fill"
                   data-pct="${pct}"
-                  style="stroke:${gradeColor}" />
+                  style="stroke:${scoreColor}" />
         </svg>
         <div class="score-overlay">
-          <span class="score-pct-text">${pct}%</span>
-          <span class="score-grade-text" style="color:${gradeColor}">${grade}</span>
-          <span class="score-fraction-text">${attempt.score} / ${attempt.max_score}</span>
+          <span class="score-pct-text" style="color:${scoreColor}">${fmtPts(attempt.score)}</span>
+          <span class="score-fraction-text">din ${fmtPts(attempt.max_score)} p</span>
         </div>
       </div>
       <div class="results-hero-right">
@@ -432,7 +425,7 @@ router.get('/tests/:id/result/:aid', wrap(async (req, res) => {
         <div class="results-stat-row">
           <div class="stat-box"><span class="stat-value">${questions.length}</span><span class="stat-label">Questions</span></div>
           <div class="stat-box"><span class="stat-value">${aaRows.filter(a => a.is_correct).length}</span><span class="stat-label">Correct</span></div>
-          <div class="stat-box"><span class="stat-value">${attempt.score}</span><span class="stat-label">Points</span></div>
+          <div class="stat-box"><span class="stat-value">${fmtPts(attempt.score)}</span><span class="stat-label">Points</span></div>
         </div>
         <div class="results-actions-inline">
           <a href="/tests/${test.id}" class="btn btn-secondary">${escHtml(settings.get('test_retake_btn'))}</a>
@@ -482,19 +475,17 @@ router.get('/attempts', wrap(async (req, res) => {
   }
 
   const rowsHtml = attempts.length === 0
-    ? `<tr><td colspan="7" class="empty-td">
+    ? `<tr><td colspan="6" class="empty-td">
          ${escHtml(settings.get('attempts_empty'))}
        </td></tr>`
     : attempts.map(a => {
         const pct   = a.max_score > 0 ? Math.round((a.score / a.max_score) * 100) : 0;
-        const grade = getGrade(pct);
         const ok    = pct >= 60;
         return `<tr>
           <td><a href="/tests/${a.test_id}" class="subject-inline-link">${escHtml(a.test_title)}</a></td>
           <td>${escHtml(a.subject_title)}</td>
-          <td><strong>${a.score} / ${a.max_score}</strong></td>
+          <td><strong>${fmtPts(a.score)} / ${fmtPts(a.max_score)}</strong></td>
           <td><span class="badge ${ok ? 'badge-success' : 'badge-fail'}">${pct}%</span></td>
-          <td><span class="grade-chip grade-${grade}">${grade}</span></td>
           <td>${new Date(a.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
           <td><a href="/tests/${a.test_id}/result/${a.id}" class="btn-link">View →</a></td>
         </tr>`;
@@ -510,7 +501,7 @@ router.get('/attempts', wrap(async (req, res) => {
       <thead>
         <tr>
           <th>Test</th><th>Subject</th><th>Score</th>
-          <th>%</th><th>Grade</th><th>Date</th><th></th>
+          <th>%</th><th>Date</th><th></th>
         </tr>
       </thead>
       <tbody>${rowsHtml}</tbody>

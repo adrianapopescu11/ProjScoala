@@ -78,7 +78,9 @@ Stored in `questions.type` (CHECK constraint: `multiple_choice | short_answer | 
 Short-answer grading is exact-match, case-insensitive, trimmed, against `answers` rows where `is_correct = 1`.
 
 ### Schema
-`supabase/schema.sql` is canonical. Tables: `subjects`, `materials` (type ∈ lesson/note/resource, content is markdown), `tests`, `questions`, `answers`, `test_attempts`, `attempt_answers`. All FKs cascade. `is_correct` and `points_earned` use numeric flags (`SMALLINT 0/1`, `REAL`) rather than booleans.
+`supabase/schema.sql` is canonical. Tables: `subjects`, `materials` (type ∈ lesson/note/resource, content is markdown), `tests`, `questions`, `answers`, `test_attempts`, `attempt_answers`, `site_settings`. All FKs cascade. `is_correct` and `points_earned` use numeric flags (`SMALLINT 0/1`, `REAL`) rather than booleans.
+
+`subjects.level` is a nullable enum (`'liceu' | 'gimnaziu' | NULL`) used by `/`, `/liceu`, and `/gimnaziu` to group/filter subjects. NULL means the subject only appears in the Home "Other" section. Set via the admin subject form.
 
 If migrating an existing DB from the auth'd schema, run:
 ```sql

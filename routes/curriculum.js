@@ -19,48 +19,100 @@ const TYPE_ICONS = {
   resource: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
 };
 
-// ── GET / — Home ──────────────────────────────────────────────────────────────
-router.get('/', wrap(async (req, res) => {
+// Card / grid helpers — used by Home + /liceu + /gimnaziu.
+function renderSubjectCard(s, countMap, testMap, matLabel, testLabel) {
+  return `
+    <a href="/subjects/${s.id}" class="subject-card" style="--subject-color: ${escHtml(s.color)}">
+      <div class="subject-color-bar"></div>
+      <div class="subject-card-body">
+        <h2 class="subject-card-title">${escHtml(s.title)}</h2>
+        <p class="subject-card-desc">${escHtml(s.description || '')}</p>
+        <div class="subject-card-meta">
+          <span class="meta-chip">${countMap[s.id] || 0} ${matLabel}</span>
+          <span class="meta-chip">${testMap[s.id] || 0} ${testLabel}</span>
+        </div>
+      </div>
+    </a>
+  `;
+}
+
+async function loadSubjectData() {
   const [subjects, matRows, testRows] = await Promise.all([
     sb(supabase.from('subjects').select('*').order('order_index').order('created_at')),
     sb(supabase.from('materials').select('subject_id')),
     sb(supabase.from('tests').select('subject_id')),
   ]);
-
   const countMap = {};
   matRows.forEach(r => { countMap[r.subject_id] = (countMap[r.subject_id] || 0) + 1; });
   const testMap = {};
   testRows.forEach(r => { testMap[r.subject_id] = (testMap[r.subject_id] || 0) + 1; });
+  return { subjects, countMap, testMap };
+}
 
+// ── GET / — Home ──────────────────────────────────────────────────────────────
+router.get('/', wrap(async (req, res) => {
+  const { subjects, countMap, testMap } = await loadSubjectData();
   const matLabel  = escHtml(settings.get('home_meta_materials'));
   const testLabel = escHtml(settings.get('home_meta_tests'));
 
-  const cardsHtml = subjects.length === 0
+  const liceu    = subjects.filter(s => s.level === 'liceu');
+  const gimnaziu = subjects.filter(s => s.level === 'gimnaziu');
+  const other    = subjects.filter(s => s.level !== 'liceu' && s.level !== 'gimnaziu');
+
+  const section = (heading, items) => items.length === 0 ? '' : `
+    <section class="home-section">
+      <h2 class="section-heading">${escHtml(heading)}</h2>
+      <div class="subjects-grid">
+        ${items.map(s => renderSubjectCard(s, countMap, testMap, matLabel, testLabel)).join('')}
+      </div>
+    </section>
+  `;
+
+  const body = subjects.length === 0
     ? `<div class="empty-state"><p>${escHtml(settings.get('home_empty'))}</p></div>`
-    : subjects.map(s => `
-      <a href="/subjects/${s.id}" class="subject-card" style="--subject-color: ${escHtml(s.color)}">
-        <div class="subject-color-bar"></div>
-        <div class="subject-card-body">
-          <h2 class="subject-card-title">${escHtml(s.title)}</h2>
-          <p class="subject-card-desc">${escHtml(s.description || '')}</p>
-          <div class="subject-card-meta">
-            <span class="meta-chip">${countMap[s.id] || 0} ${matLabel}</span>
-            <span class="meta-chip">${testMap[s.id] || 0} ${testLabel}</span>
-          </div>
-        </div>
-      </a>
-    `).join('');
+    : [
+        section(settings.get('home_section_liceu'),    liceu),
+        section(settings.get('home_section_gimnaziu'), gimnaziu),
+        section(settings.get('home_section_other'),    other),
+      ].join('');
 
   res.send(page('Home', `
     <div class="page-header">
       <h1 class="page-title">${escHtml(settings.get('home_title'))}</h1>
       <p class="page-subtitle">${escHtml(settings.get('home_subtitle'))}</p>
     </div>
-    <div class="subjects-grid">${cardsHtml}</div>
+    ${body}
   `));
 }));
 
 router.get('/subjects', (req, res) => res.redirect('/'));
+
+// ── GET /liceu, /gimnaziu — level-filtered subject lists ─────────────────────
+function levelPage(level, titleKey, subtitleKey, emptyKey) {
+  return wrap(async (req, res) => {
+    const { subjects, countMap, testMap } = await loadSubjectData();
+    const matLabel  = escHtml(settings.get('home_meta_materials'));
+    const testLabel = escHtml(settings.get('home_meta_tests'));
+
+    const items = subjects.filter(s => s.level === level);
+    const body = items.length === 0
+      ? `<div class="empty-state"><p>${escHtml(settings.get(emptyKey))}</p></div>`
+      : `<div class="subjects-grid">${items.map(s =>
+          renderSubjectCard(s, countMap, testMap, matLabel, testLabel)
+        ).join('')}</div>`;
+
+    res.send(page(settings.get(titleKey), `
+      <div class="page-header">
+        <h1 class="page-title">${escHtml(settings.get(titleKey))}</h1>
+        <p class="page-subtitle">${escHtml(settings.get(subtitleKey))}</p>
+      </div>
+      ${body}
+    `));
+  });
+}
+
+router.get('/liceu',    levelPage('liceu',    'liceu_title',    'liceu_subtitle',    'liceu_empty'));
+router.get('/gimnaziu', levelPage('gimnaziu', 'gimnaziu_title', 'gimnaziu_subtitle', 'gimnaziu_empty'));
 
 // ── GET /subjects/:id ─────────────────────────────────────────────────────────
 router.get('/subjects/:id', wrap(async (req, res) => {

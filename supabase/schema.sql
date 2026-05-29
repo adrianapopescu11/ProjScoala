@@ -7,8 +7,13 @@ CREATE TABLE IF NOT EXISTS subjects (
   description TEXT,
   color       TEXT DEFAULT '#5C7A5C',
   order_index INTEGER DEFAULT 0,
+  level       TEXT CHECK (level IN ('liceu', 'gimnaziu')),
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- If migrating an existing DB, run:
+--   ALTER TABLE subjects ADD COLUMN IF NOT EXISTS level TEXT
+--     CHECK (level IN ('liceu', 'gimnaziu'));
 
 CREATE TABLE IF NOT EXISTS materials (
   id          SERIAL PRIMARY KEY,
@@ -38,7 +43,7 @@ CREATE TABLE IF NOT EXISTS questions (
   type          TEXT NOT NULL DEFAULT 'multiple_choice'
                 CHECK(type IN ('multiple_choice', 'short_answer', 'grid')),
   order_index   INTEGER DEFAULT 0,
-  points        INTEGER DEFAULT 1
+  points        REAL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS answers (
